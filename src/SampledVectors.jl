@@ -7,15 +7,16 @@ mutable struct SampledVector{T, NT<:Integer} <: AbstractVector{T}
     step::NT #sampling step
     length::NT #claimed length
     maxlength::NT #maximum actual length in memory
+    filter
 end
 
-function SampledVector{T}(maxlength::NT, step=one(NT)) where {T, NT<:Integer}
+function SampledVector{T}(maxlength::NT, step=one(NT); filter=identity) where {T, NT<:Integer}
     @assert maxlength >= 2
-    SampledVector(Vector{T}(), step, zero(NT), maxlength)
+    SampledVector(Vector{T}(), step, zero(NT), maxlength, filter)
 end
-function SampledVector(vec::AbstractVector, step=1)
+function SampledVector(vec::AbstractVector, step=1, filter=identity)
     @assert length(vec) >= 2
-    SampledVector(vec, step, length(vec)*step, length(vec))
+    SampledVector(vec, step, length(vec)*step, length(vec), filter)
 end
 SampledVector(args...) = SampledVector(Vector(args...))
 
@@ -28,6 +29,7 @@ Base.step(l::SampledVector) = l.step
 maxlength(l::SampledVector) = l.maxlength #max actual length in memory
 
 function downsample!(l::SampledVector)
+    l.vec = l.filter(l.vec)
     for i in 3:2:maxlength(l)
         l.vec[i÷2+1] = l.vec[i]
     end

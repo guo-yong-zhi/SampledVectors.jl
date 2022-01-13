@@ -28,3 +28,31 @@ plot!(1:100, itp_cubic.(1:100), linestyle=:dash, label="better interpolation")
 plot!(legend = :bottomleft)
 ```
 ![sampling and interpolation](sampling_and_interpolation.svg)
+```julia
+# If there are high frequency components in the original signal, an anti-aliasing filter may be helpful.
+using Plots
+y = [cos(x^2/90000)+0.6cos(0.75x) for x in 1:1000]
+plot(y, label="original curve")
+
+using SampledVectors
+vector = SampledVector{Float64}(200)
+for yy in y
+    push!(vector, yy)
+end
+# Aliasing occurs
+plot!(collect(sampledindexes(vector)), sampled(vector), color="gray", label="unfiltered") 
+scatter!(collect(sampledindexes(vector)), sampled(vector), color="gray", label=nothing)
+
+using DSP
+# Set a half-band filter (lowpass filter at 0.5 HZ) for the internal downsampling by a factor 2.
+# The filter can reduce the aliasing at the beginning of the curve, but the problem is not fundamentally solved.
+filter = s->filt(digitalfilter(Lowpass(0.5), FIRWindow(hanning(9))), s)
+vector2 = SampledVector{Float64}(200, filter=filter)
+for yy in y
+    push!(vector2, yy)
+end
+plot!(collect(sampledindexes(vector2)), sampled(vector2), color="orange", label="filtered") 
+scatter!(collect(sampledindexes(vector2)), sampled(vector2), color="orange", label=nothing)
+plot!(legend = :bottomleft)
+```
+![unfiltered vs filtered](unfiltered_vs_filtered.svg)
