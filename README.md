@@ -1,4 +1,5 @@
 # SampledVectors.jl
+[![CI](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci.yml) [![CI-nightly](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci-nightly.yml/badge.svg)](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci-nightly.yml) [![codecov](https://codecov.io/gh/guo-yong-zhi/SampledVectors.jl/branch/main/graph/badge.svg?token=785ZNXGQKL)](https://codecov.io/gh/guo-yong-zhi/SampledVectors.jl)  
 `SampledVector` is a vector of finite length, but can push elements into it infinitely. When you push in a new element and exceed the maximum length limit, it will be automatically downsampled. `SampledVector` can be used to record metrics, such as training loss curve in machine learning.
 ```julia
 using Plots
