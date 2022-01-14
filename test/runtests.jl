@@ -21,4 +21,18 @@ using Test
         push!(l, i)
     end
     @test sampled(l) == [1, 5, 7]
+    @test capacity(l) == 3
+
+    capacity!(l, 5)
+    @test capacity(l) == 5
+    foreach(x->push!(l, x), 8:16)
+    l2 = SampledVector{Int}(5)
+    foreach(x->push!(l2, x), 1:16)
+    @test sampled(l) == sampled(l2)
+    @test sampledindexes(l)|>collect == sampled(l)
+    @test step(l) == step(l2)
+    capacity!(l, 4)
+    @test capacity(l) == 4
+    @test sampled(l) == [1, 9, 16]
+    @test sampledindexes(l)|>collect == sampled(l)
 end
