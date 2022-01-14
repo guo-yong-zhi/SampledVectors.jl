@@ -29,7 +29,7 @@ plot!(legend = :bottomleft)
 ```
 ![sampling and interpolation](sampling_and_interpolation.svg)
 ```julia
-# If there are high frequency components in the original signal, an anti-aliasing filter may be helpful.
+# If there are high frequency components in the original signal, an anti-aliasing filter may be required.
 using Plots
 y = [cos(x^2/90000)+0.6cos(0.75x) for x in 1:1000]
 plot(y, label="original curve")
@@ -40,19 +40,26 @@ for yy in y
     push!(vector, yy)
 end
 # Aliasing occurs
-plot!(collect(sampledindexes(vector)), sampled(vector), color="gray", label="unfiltered") 
+plot!(collect(sampledindexes(vector)), sampled(vector), color="gray", label="sampled & unfiltered") 
 scatter!(collect(sampledindexes(vector)), sampled(vector), color="gray", label=nothing)
 
 using DSP
-# Set a half-band filter (lowpass filter at 0.5 HZ) for the internal downsampling by a factor 2.
-# The filter can reduce the aliasing at the beginning of the curve, but the problem is not fundamentally solved.
-filter = s->filt(digitalfilter(Lowpass(0.5), FIRWindow(hanning(9))), s)
-vector2 = SampledVector{Float64}(200, filter=filter)
+using OnlineStats
+# In order to prevent aliasing, high-frequency components should be filtered out before pushing.
+# Here, a moving window is used to implement an online filter.
+kernel = digitalfilter(Lowpass(0.1), FIRWindow(hanning(25)))
+window = MovingWindow(Float64, length(kernel))
+fit!(window, repeat([0.], length(kernel))) #zero padding
+vector2 = SampledVector{Float64}(200)
 for yy in y
-    push!(vector2, yy)
+    fit!(window, yy)
+    push!(vector2, sum(value(window) .* kernel))
 end
-plot!(collect(sampledindexes(vector2)), sampled(vector2), color="orange", label="filtered") 
+plot!(collect(sampledindexes(vector2)), sampled(vector2), color="orange", label="sampled & online filtered") 
 scatter!(collect(sampledindexes(vector2)), sampled(vector2), color="orange", label=nothing)
+
+# Let's plot the result of standard offline filtering for comparison.
+plot!(filt(kernel, y), color="red", label="unsampled & filtered")
 plot!(legend = :bottomleft)
 ```
 ![unfiltered vs filtered](unfiltered_vs_filtered.svg)
