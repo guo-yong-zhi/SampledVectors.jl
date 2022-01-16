@@ -1,12 +1,12 @@
 # SampledVectors.jl
 [![CI](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci.yml) [![CI-nightly](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci-nightly.yml/badge.svg)](https://github.com/guo-yong-zhi/SampledVectors.jl/actions/workflows/ci-nightly.yml) [![codecov](https://codecov.io/gh/guo-yong-zhi/SampledVectors.jl/branch/main/graph/badge.svg?token=785ZNXGQKL)](https://codecov.io/gh/guo-yong-zhi/SampledVectors.jl)  
-`SampledVector` is of finite length, but elements can be pushed into it infinitely. If a new element pushed leads to the vector exceeding its maximum capacity, automatical downsampling will be triggered. `SampledVector` can be used to record metrics, such as training loss curve in machine learning.
+`SampledVector` is of limited capacity, but has unlimited logical length. If a new element pushed leads to the vector exceeding its maximum capacity, an automatical [downsampling](https://en.wikipedia.org/wiki/Downsampling_(signal_processing)) by an integer factor of *M* will be performed. That is, keep only every *Mth* sample. `SampledVector` can be used to record metrics, such as training loss curve in machine learning.
 ## Installation
 ```julia
 import Pkg; Pkg.add("SampledVectors")
 ```
 ## Sampling and Interpolation
-There are 1 exported type, `SampledVectors`, and 3 important methods, `push!`, `sampled` and `sampledindexes`.
+There are 1 exported type, `SampledVector`, and 3 important methods, `push!`, `sampled` and `sampledindexes`.
 ```julia
 using Plots
 y = [cos(x^2/900) for x in 1:100]
