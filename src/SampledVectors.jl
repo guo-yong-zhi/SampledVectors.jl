@@ -1,43 +1,57 @@
 module SampledVectors
 
-export SampledVector, sampled, sampledindexes, capacity, capacity!
+export SampledVector, sampled, sampledindexes, capacity, setcapacity!, factor, setfactor!, downsample!
 
-mutable struct SampledVector{T, NT<:Integer} <: AbstractVector{T}
+mutable struct SampledVector{T, ST<:Integer, LT<:Integer, CT<:Integer, FT<:Integer} <: AbstractVector{T}
     vec::Vector{T}
-    step::NT #sampling step
-    length::NT #claimed length
-    capacity::NT #maximum number of stored elements
+    step::ST #sampling step
+    length::LT #claimed length
+    capacity::CT #maximum number of stored elements
+    factor::FT #factor that decrease the sample rate by 
 end
 
-function SampledVector{T}(capacity::NT, step=one(NT)) where {T, NT<:Integer}
+function SampledVector{T}(capacity::CT; step=one(CT), length=zero(CT), factor=2one(CT)) where {T, CT<:Integer}
     @assert capacity >= 2
-    SampledVector(Vector{T}(), step, zero(NT), capacity)
+    @assert factor >= 2
+    SampledVector(Vector{T}(), step, length, capacity, factor)
 end
-function SampledVector(vec::AbstractVector, step=1)
-    @assert length(vec) >= 2
-    SampledVector(vec, step, length(vec)*step, length(vec))
+function SampledVector(vec::AbstractVector; step=1, capacity=length(vec), length=capacity*step, factor=2)
+    @assert capacity >= 2
+    @assert factor >= 2
+    SampledVector(vec, step, length, capacity, factor)
 end
-SampledVector(args...) = SampledVector(Vector(args...))
+SampledVector(args...; kargs...) = SampledVector(Vector(args...); kargs...)
 
 mapindex(l::SampledVector, ind::Integer) = ceil(typeof(ind), (ind-1)/l.step) + 1
 Base.size(l::SampledVector) = (l.length,)
 Base.getindex(l::SampledVector, i::Integer) = getindex(l.vec, mapindex(l, i))
 Base.setindex!(l::SampledVector, v, i::Integer) = setindex!(l.vec, v, mapindex(l, i))
 Base.step(l::SampledVector) = l.step
-capacity(l::SampledVector) = l.capacity #maximum number of stored elements
-function capacity!(l::SampledVector, n)
+capacity(l::SampledVector) = l.capacity
+function setcapacity!(l::SampledVector, n)
     @assert n >= 2
     while length(l.vec) > n
         downsample!(l)
     end
     l.capacity = n
 end
-function downsample!(l::SampledVector)
-    for i in 3:2:capacity(l)
-        l.vec[i÷2+1] = l.vec[i]
+factor(l::SampledVector) = l.factor
+function setfactor!(l::SampledVector, n)
+    @assert n >= 2
+    l.factor = n
+end
+function downsample!(l::SampledVector, factor=l.factor, truncate=false)
+    lv = length(l.vec)
+    for i in (1+factor):factor:lv
+        l.vec[i÷factor+1] = l.vec[i] #i÷factor+1 == (i-1)÷factor+1 when factor >= 2
     end
-    l.step *= 2
-    resize!(l.vec, (capacity(l)-1)÷2+1)
+    l.step *= factor
+    last = l.vec[end]
+    resize!(l.vec, (lv-1)÷factor+1)
+    # @assert length(l.vec) < capacity(l)
+    if !truncate && (lv-1) % factor != 0
+        push!(l.vec, last)
+    end
     return l
 end
 
@@ -45,8 +59,8 @@ function Base.push!(l::SampledVector, item)
     ind = l.length + 1
     mi = mapindex(l, ind)
     if mi > capacity(l) #Excess capacity
-        downsample!(l)
-        push!(l.vec, item)
+        downsample!(l, l.factor, true)
+        push!(l.vec, item) #if truncated, there always be a blank
     elseif mi > length(l.vec)
         push!(l.vec, item)
     else
