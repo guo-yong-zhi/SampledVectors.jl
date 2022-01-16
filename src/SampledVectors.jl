@@ -13,7 +13,9 @@ end
 function SampledVector{T}(capacity::CT; step=one(CT), length=zero(CT), factor=2one(CT)) where {T, CT<:Integer}
     @assert capacity >= 2
     @assert factor >= 2
-    SampledVector(Vector{T}(), step, length, capacity, factor)
+    vec = Vector{T}()
+    sizehint!(vec, capacity)
+    SampledVector(vec, step, length, capacity, factor)
 end
 function SampledVector(vec::AbstractVector; step=1, capacity=length(vec), length=capacity*step, factor=2)
     @assert capacity >= 2
@@ -33,6 +35,7 @@ function setcapacity!(l::SampledVector, n)
     while length(l.vec) > n
         downsample!(l)
     end
+    sizehint!(l.vec, n)
     l.capacity = n
 end
 factor(l::SampledVector) = l.factor
