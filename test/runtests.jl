@@ -10,6 +10,14 @@ using Test
     end
     @test sampled(l) == [1, 65, 129, 193, 257, 321, 385, 449, 513, 577, 641, 705, 769, 833, 897, 961, 1025, 1089, 1153, 1217, 1234]
     
+    #empty!
+    @test empty!(l) === l
+    @test length(l) == 0
+    @test collect(l) |> isempty
+    @test step(l) == 1
+    @test sampledindexes(l)|>collect |> isempty
+    @test sampled(l)|>collect |> isempty
+
     # edge case: capacity=2
     l = SampledVector{Int}(BigInt(2))
     for i in 1:27

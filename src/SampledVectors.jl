@@ -29,6 +29,12 @@ Base.size(l::SampledVector) = (l.length,)
 Base.getindex(l::SampledVector, i::Integer) = getindex(l.vec, mapindex(l, i))
 Base.setindex!(l::SampledVector, v, i::Integer) = setindex!(l.vec, v, mapindex(l, i))
 Base.step(l::SampledVector) = l.step
+function Base.empty!(l::SampledVector)
+    empty!(l.vec)
+    l.step = 1
+    l.length = 0
+    l
+end
 capacity(l::SampledVector) = l.capacity
 function setcapacity!(l::SampledVector, n)
     @assert n >= 2
